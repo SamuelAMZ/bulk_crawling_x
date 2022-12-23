@@ -11,8 +11,6 @@ const numberOfBoxes = async (page) => {
       Array.from(document.querySelector("#main-content ul").children)
     );
 
-    console.log(elements);
-
     return { number: elements.length, boxesClass: "#main-content ul" };
   } catch (error) {
     console.log(error);

@@ -10,7 +10,6 @@ const getAndStorePeopleInMemory = async (page) => {
     ).map((item) => item.querySelector("a").href)
   );
 
-  console.log(people);
   return people;
 };
 
