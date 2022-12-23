@@ -4,7 +4,6 @@
 
 require("dotenv").config();
 
-let cursor = 0;
 const newProxy = () => {
   const proxies = [
     `${process.env.PROXY1}`,
@@ -107,13 +106,10 @@ const newProxy = () => {
     `${process.env.PROXY100}`,
   ];
 
-  if (cursor < proxies.length - 1) {
-    cursor++;
-  } else {
-    cursor = 0;
-  }
+  let random = Math.floor(Math.random() * 100);
+  let newProxy = proxies[random];
 
-  let newProxy = proxies[cursor];
+  console.log(`proxy n° ${random}`);
   return newProxy;
 };
 

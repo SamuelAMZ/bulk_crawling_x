@@ -79,8 +79,7 @@ const scrapper = async (proxySession, randomPage) => {
   blockResourcesPlugin.blockedTypes.add("image");
   blockResourcesPlugin.blockedTypes.add("font");
 
-  console.log(randomPage);
-  console.log(proxySession);
+  console.log(randomPage + " page");
 
   // await page.goto("https://whatismyipaddress.com/", {
   //   waitUntil: "networkidle2",
@@ -96,7 +95,7 @@ const scrapper = async (proxySession, randomPage) => {
     await firstLoadPopupResolver(page);
   } catch (error) {
     console.log(error, proxySession);
-    await browser.close();
+    return await browser.close();
   }
   //   get and store page items url in memory array
   const peopleLinksArr = await getAndStorePeopleInMemory(page);
@@ -128,7 +127,7 @@ const go = async () => {
 
     // if round === 100 wait 20mins
     let TWENTYMINS = 1200000;
-    if (round >= 3) {
+    if (round >= 5) {
       console.log("sleeping...");
       await setTimeout(TWENTYMINS);
       round = 0;
