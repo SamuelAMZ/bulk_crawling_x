@@ -4,8 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "tryst": "node ./tryst/index.js",
-    "vip": "node ./vip/index.js"
+    "tryst": "node ./_tryst/index.js",
+    "vip": "node ./_vip/index.js",
+    "eros": "node ./_eros/index.js"
   },
   "author": "SamuelAMZ",
   "license": "ISC",
