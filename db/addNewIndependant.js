@@ -31,6 +31,11 @@ const addNewIndependant = async (newItem) => {
       }
     }
   }
+
+  if (isExist && !isExist.needUpdate) {
+    console.log("no " + isExist.name);
+    return "next";
+  }
   // else just add new record
   const indep = new Independants(newItem);
   try {
