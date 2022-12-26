@@ -6,7 +6,9 @@
   "scripts": {
     "tryst": "node ./_tryst/index.js",
     "vip": "node ./_vip/index.js",
-    "eros": "node ./_eros/index.js"
+    "eros": "node ./_eros/index.js",
+    "esnews": "node ./_esnews/index.js",
+    "dup": "node ./db/duplicatesHandler.js"
   },
   "author": "SamuelAMZ",
   "license": "ISC",

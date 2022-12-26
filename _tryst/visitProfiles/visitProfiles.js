@@ -78,7 +78,7 @@ const visitProfile = async (peopleLinks, page) => {
           await frame.click("[name='commit']");
 
           // wait for captcha to fully closed
-          await page.waitForTimeout(4000);
+          await page.waitForTimeout(2000);
         }
       } catch (error) {
         console.log(error);

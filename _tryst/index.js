@@ -40,38 +40,38 @@ mongoose.connect(process.env.DBURI, (err) => {
 const scrapper = async (proxySession, randomPage) => {
   // Create random user-agent to be set through plugin
   // const userAgentStr = randomUseragent.getRandom(function (ua) {
-  //   return ua.browserName === "Chrome";
+  //   return parseFloat(ua.browserVersion) >= 20;
   // });
   // console.log(`User Agent: ${userAgentStr}`);
 
   const browser = await puppeteer.launch({
     headless: false,
+    defaultViewport: {
+      width: 1920,
+      height: 1080,
+    },
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--disable-infobars",
-      "--window-position=0,0",
-      "--ignore-certifcate-errors",
-      "--ignore-certifcate-errors-spki-list",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
+      // "--no-sandbox",
+      // "--disable-setuid-sandbox",
+      // "--disable-dev-shm-usage",
+      // "--disable-accelerated-2d-canvas",
+      // "--no-first-run",
+      // "--disable-infobars",
+      // "--window-position=0,0",
+      // "--ignore-certifcate-errors",
+      // "--ignore-certifcate-errors-spki-list",
+      // "--no-zygote",
+      // "--single-process",
+      // "--disable-gpu",
       `--proxy-server=${proxySession}`,
     ],
   });
 
-  const page = await browser.newPage();
+  const context = await browser.createIncognitoBrowserContext();
+  // Create a new page in a pristine context.
+  const page = await context.newPage();
+
   // await page.setUserAgent(userAgentStr);
-
-  await page.setViewport({
-    width: 1840,
-    height: 1080,
-    deviceScaleFactor: 1,
-  });
-
   // console.log(await page.evaluate("navigator.userAgent"));
 
   // block images and css...
@@ -84,7 +84,6 @@ const scrapper = async (proxySession, randomPage) => {
   // await page.goto("https://whatismyipaddress.com/", {
   //   waitUntil: "networkidle2",
   // });
-  // await page.waitForTimeout(2000);
 
   try {
     await page.goto(`${process.env.ENTRY}${randomPage}`, {
@@ -100,7 +99,7 @@ const scrapper = async (proxySession, randomPage) => {
   //   get and store page items url in memory array
   const peopleLinksArr = await getAndStorePeopleInMemory(page);
   //   visit each profile
-  const ret = await visitProfile(peopleLinksArr, page);
+  const ret = await visitProfile(peopleLinksArr, page, browser);
 
   if (ret === "hide") {
     return await browser.close();
@@ -120,6 +119,7 @@ const go = async () => {
     round++;
     // new ip
     const proxySession = newProxy();
+
     // random page
     const randomPage = Math.floor(Math.random() * 662);
     // launch
@@ -127,7 +127,7 @@ const go = async () => {
 
     // if round === 100 wait 20mins
     let TWENTYMINS = 1200000;
-    if (round >= 5) {
+    if (round >= 9) {
       console.log("sleeping...");
       await setTimeout(TWENTYMINS);
       round = 0;
