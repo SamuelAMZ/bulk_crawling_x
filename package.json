@@ -8,6 +8,7 @@
     "vip": "node ./_vip/index.js",
     "eros": "node ./_eros/index.js",
     "esnews": "node ./_esnews/index.js",
+    "euro": "node ./_euro/index.js",
     "dup": "node ./db/duplicatesHandler.js"
   },
   "author": "SamuelAMZ",

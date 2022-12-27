@@ -1,5 +1,5 @@
 node_modules
 .env
-_eros/entry.js
-_esnews/entry.js
+*/entry.js
 _esnews/profiles
+_euro/profiles

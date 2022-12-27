@@ -5,18 +5,17 @@ const countriesLinks = require("../entry");
 const group1 = async () => {
   let arr = [];
 
-  for (let i = 3; i < 21; i++) {
+  for (let i = 4; i < 21; i++) {
     const countryNameArr = countriesLinks[i].split("/");
-    const countryName = countryNameArr[countryNameArr.length - 1];
+    const countryName = countryNameArr[countryNameArr.length - 2];
 
     const output = await fs.promises.readFile(
-      `./_esnews/profiles/${countryName}.json`,
+      `./_euro/profiles/${countryName}.json`,
       "utf8"
     );
 
     obj = JSON.parse(output);
     arr.push(...obj.data);
-    console.log(countryName, i);
   }
 
   return arr;
@@ -25,12 +24,12 @@ const group1 = async () => {
 const group2 = async () => {
   let arr = [];
 
-  for (let i = 30; i < 42; i++) {
+  for (let i = 32; i < 42; i++) {
     const countryNameArr = countriesLinks[i].split("/");
-    const countryName = countryNameArr[countryNameArr.length - 1];
+    const countryName = countryNameArr[countryNameArr.length - 2];
 
     const output = await fs.promises.readFile(
-      `./_esnews/profiles/${countryName}.json`,
+      `./_euro/profiles/${countryName}.json`,
       "utf8"
     );
 
@@ -44,12 +43,12 @@ const group2 = async () => {
 const group3 = async () => {
   let arr = [];
 
-  for (let i = 45; i < 63; i++) {
+  for (let i = 42; i < 63; i++) {
     const countryNameArr = countriesLinks[i].split("/");
-    const countryName = countryNameArr[countryNameArr.length - 1];
+    const countryName = countryNameArr[countryNameArr.length - 2];
 
     const output = await fs.promises.readFile(
-      `./_esnews/profiles/${countryName}.json`,
+      `./_euro/profiles/${countryName}.json`,
       "utf8"
     );
 
@@ -63,12 +62,12 @@ const group3 = async () => {
 const group4 = async () => {
   let arr = [];
 
-  for (let i = 81; i < 84; i++) {
+  for (let i = 63; i < 84; i++) {
     const countryNameArr = countriesLinks[i].split("/");
-    const countryName = countryNameArr[countryNameArr.length - 1];
+    const countryName = countryNameArr[countryNameArr.length - 2];
 
     const output = await fs.promises.readFile(
-      `./_esnews/profiles/${countryName}.json`,
+      `./_euro/profiles/${countryName}.json`,
       "utf8"
     );
 
@@ -82,12 +81,12 @@ const group4 = async () => {
 const group5 = async () => {
   let arr = [];
 
-  for (let i = 89; i < 107; i++) {
+  for (let i = 84; i < 118; i++) {
     const countryNameArr = countriesLinks[i].split("/");
-    const countryName = countryNameArr[countryNameArr.length - 1];
+    const countryName = countryNameArr[countryNameArr.length - 2];
 
     const output = await fs.promises.readFile(
-      `./_esnews/profiles/${countryName}.json`,
+      `./_euro/profiles/${countryName}.json`,
       "utf8"
     );
 

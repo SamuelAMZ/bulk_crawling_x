@@ -21,7 +21,6 @@ const { setTimeout } = require("timers/promises");
 
 // functions imports
 const grabLinks = require("./grabLinks/index");
-const cloudflareBypass = require("./cloudflareBypass/index");
 const visitProfiles = require("./visiteProfiles/index");
 
 require("dotenv").config();
@@ -60,44 +59,24 @@ const scrapper = async (proxySession) => {
   });
 
   // block images and css...
-  // blockResourcesPlugin.blockedTypes.add("media");
-  // blockResourcesPlugin.blockedTypes.add("stylesheet");
-  // blockResourcesPlugin.blockedTypes.add("image");
-  // blockResourcesPlugin.blockedTypes.add("font");
+  blockResourcesPlugin.blockedTypes.add("media");
+  blockResourcesPlugin.blockedTypes.add("stylesheet");
+  blockResourcesPlugin.blockedTypes.add("image");
+  blockResourcesPlugin.blockedTypes.add("font");
 
   // console.log(await page.evaluate("navigator.userAgent"));
 
   // visit from the top of the archives
-  await page.goto("https://escortnews.eu", {
+  await page.goto("https://www.eurogirlsescort.com/", {
     waitUntil: "networkidle2",
     timeout: 120000,
   });
 
-  // cloudflare bypass
-  const newInstance = await cloudflareBypass(page, browser);
+  // grab links
+  // await grabLinks(page);
+  await visitProfiles(page);
 
-  if (newInstance.status === "ok") {
-    // grab links
-    // await grabLinks(newInstance.p);
-    try {
-      await visitProfiles(newInstance.p);
-    } catch (error) {
-      console.log(error);
-    }
-
-    await newInstance.b.close();
-  } else {
-    await newInstance.b.close();
-  }
-
-  // visite
-  // visite country array one by one
-  // scrall to bottom
-  // wait 20sec
-  // grab pages url
-  // paginate if exist
-  // ...
-  // create json file and store it with the country name
+  await browser.close();
 };
 
 // // new ip
