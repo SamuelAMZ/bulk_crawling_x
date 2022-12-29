@@ -16,7 +16,7 @@ const visitProfiles = async (page) => {
   // wait 1sec for the array to be ready
   console.log("here");
 
-  const tempAll = await group5();
+  const tempAll = await group3();
 
   // loop to visit one
   for (let i = 0; i < tempAll.length; i++) {

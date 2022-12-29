@@ -5,7 +5,7 @@ const countriesLinks = require("../entry");
 const group1 = async () => {
   let arr = [];
 
-  for (let i = 4; i < 21; i++) {
+  for (let i = 14; i < 21; i++) {
     const countryNameArr = countriesLinks[i].split("/");
     const countryName = countryNameArr[countryNameArr.length - 2];
 
@@ -24,7 +24,7 @@ const group1 = async () => {
 const group2 = async () => {
   let arr = [];
 
-  for (let i = 32; i < 42; i++) {
+  for (let i = 41; i < 42; i++) {
     const countryNameArr = countriesLinks[i].split("/");
     const countryName = countryNameArr[countryNameArr.length - 2];
 
@@ -35,15 +35,17 @@ const group2 = async () => {
 
     obj = JSON.parse(output);
     arr.push(...obj.data);
+    console.log(countryName, i);
   }
 
   return arr;
 };
+group2();
 
 const group3 = async () => {
   let arr = [];
 
-  for (let i = 42; i < 63; i++) {
+  for (let i = 55; i < 63; i++) {
     const countryNameArr = countriesLinks[i].split("/");
     const countryName = countryNameArr[countryNameArr.length - 2];
 
@@ -62,7 +64,7 @@ const group3 = async () => {
 const group4 = async () => {
   let arr = [];
 
-  for (let i = 63; i < 84; i++) {
+  for (let i = 73; i < 84; i++) {
     const countryNameArr = countriesLinks[i].split("/");
     const countryName = countryNameArr[countryNameArr.length - 2];
 
@@ -81,7 +83,7 @@ const group4 = async () => {
 const group5 = async () => {
   let arr = [];
 
-  for (let i = 84; i < 118; i++) {
+  for (let i = 99; i < 118; i++) {
     const countryNameArr = countriesLinks[i].split("/");
     const countryName = countryNameArr[countryNameArr.length - 2];
 
@@ -104,3 +106,13 @@ module.exports = {
   group4,
   group5,
 };
+
+// const arr = []
+// Array.from(document.querySelector("#states").children).forEach(c => {
+//   arr.push(c.innerText.replace(')', '').split('(')[1])
+// })
+// let num = 0
+// arr.forEach(e => {
+//   num = num + Number(e)
+// })
+// console.log(num)
