@@ -9,6 +9,7 @@
     "eros": "node ./_eros/index.js",
     "esnews": "node ./_esnews/index.js",
     "euro": "node ./_euro/index.js",
+    "spal": "node ./_spal/index.js",
     "dup": "node ./db/duplicatesHandler.js"
   },
   "author": "SamuelAMZ",
