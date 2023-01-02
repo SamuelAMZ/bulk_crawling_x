@@ -10,6 +10,7 @@
     "esnews": "node ./_esnews/index.js",
     "euro": "node ./_euro/index.js",
     "spal": "node ./_spal/index.js",
+    "rmaps": "node ./_rmaps/index.js",
     "dup": "node ./db/duplicatesHandler.js"
   },
   "author": "SamuelAMZ",
