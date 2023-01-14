@@ -106,7 +106,7 @@ const newProxy = () => {
     `${process.env.PROXY100}`,
   ];
 
-  let random = Math.floor(Math.random() * 100);
+  let random = Math.floor(Math.random() * 97);
   let newProxy = proxies[random];
 
   console.log(`proxy n° ${random}`);

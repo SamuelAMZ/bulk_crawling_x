@@ -1,7 +1,12 @@
 // split countries in 5 smaller groups
 // node built in waiter
-const { setTimeout } = require("timers/promises");
-const { group1, group2 } = require("../countriesGroups/index");
+const {
+  group1,
+  group2,
+  group3,
+  group4,
+  group5,
+} = require("../countriesGroups/index");
 const addNewIndependant = require("../../db/addNewIndependant");
 const checkIndependant = require("../../db/checkIndependant");
 const grabDetails = require("../grabDetails/index");
@@ -10,7 +15,7 @@ const visitProfiles = async (page) => {
   // wait 1sec for the array to be ready
   console.log("here");
 
-  const tempAll = await group1();
+  const tempAll = await group2();
 
   // loop to visit one
   for (let i = 0; i < tempAll.length; i++) {
@@ -46,6 +51,19 @@ const visitProfiles = async (page) => {
     } catch (error) {
       console.log(error, "cloudflare error, on single profiles visit");
       continue;
+    }
+
+    // check if site block access
+    try {
+      // check for cloudflare
+      const SITE_BLOCK_CLASS = "#maxreached";
+      await page.waitForSelector(SITE_BLOCK_CLASS, {
+        timeout: 1500,
+      });
+      console.log("site block");
+      return "hide";
+    } catch (error) {
+      console.log("no block");
     }
 
     // grab details

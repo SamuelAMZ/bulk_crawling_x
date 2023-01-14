@@ -39,10 +39,10 @@ mongoose.connect(process.env.DBURI, (err) => {
 
 const scrapper = async (proxySession, randomPage) => {
   // Create random user-agent to be set through plugin
-  // const userAgentStr = randomUseragent.getRandom(function (ua) {
-  //   return parseFloat(ua.browserVersion) >= 20;
-  // });
-  // console.log(`User Agent: ${userAgentStr}`);
+  const userAgentStr = randomUseragent.getRandom(function (ua) {
+    return parseFloat(ua.browserVersion) >= 20;
+  });
+  console.log(`User Agent: ${userAgentStr}`);
 
   const browser = await puppeteer.launch({
     headless: false,
@@ -51,33 +51,38 @@ const scrapper = async (proxySession, randomPage) => {
       height: 1080,
     },
     args: [
-      // "--no-sandbox",
-      // "--disable-setuid-sandbox",
-      // "--disable-dev-shm-usage",
-      // "--disable-accelerated-2d-canvas",
-      // "--no-first-run",
-      // "--disable-infobars",
-      // "--window-position=0,0",
-      // "--ignore-certifcate-errors",
-      // "--ignore-certifcate-errors-spki-list",
-      // "--no-zygote",
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--disable-infobars",
+      "--window-position=0,0",
+      "--ignore-certifcate-errors",
+      "--ignore-certifcate-errors-spki-list",
+      "--no-zygote",
       // "--single-process",
-      // "--disable-gpu",
+      "--disable-gpu",
+      // "--enable-features=NetworkService",
       `--proxy-server=${proxySession}`,
+      // "--proxy-bypass-list=*",
     ],
   });
 
-  const context = await browser.createIncognitoBrowserContext();
+  // const context = await browser.createIncognitoBrowserContext();
   // Create a new page in a pristine context.
-  const page = await context.newPage();
+  const page = await browser.newPage();
 
-  // await page.setUserAgent(userAgentStr);
-  // console.log(await page.evaluate("navigator.userAgent"));
+  await page.authenticate({ username: "jwvcqoqc", password: "z5dc7uri8t3t" });
+
+  await page.setUserAgent(userAgentStr);
+  console.log(await page.evaluate("navigator.userAgent"));
 
   // block images and css...
   blockResourcesPlugin.blockedTypes.add("media");
   blockResourcesPlugin.blockedTypes.add("image");
   blockResourcesPlugin.blockedTypes.add("font");
+  blockResourcesPlugin.blockedTypes.add("other");
 
   console.log(randomPage + " page");
 
@@ -85,11 +90,13 @@ const scrapper = async (proxySession, randomPage) => {
   //   waitUntil: "networkidle2",
   // });
 
+  // await page.waitForTimeout(10000);
+
   try {
     await page.goto(`${process.env.ENTRY}${randomPage}`, {
       waitUntil: "networkidle2",
+      timeout: 120000,
     });
-
     //   check if popup apears and close it
     await firstLoadPopupResolver(page);
   } catch (error) {
@@ -119,6 +126,7 @@ const go = async () => {
     round++;
     // new ip
     const proxySession = newProxy();
+    // const proxySession = "gate.smartproxy.com:7000";
 
     // random page
     const randomPage = Math.floor(Math.random() * 662);

@@ -18,6 +18,7 @@ const visitProfile = async (peopleLinks, page) => {
 
     await page.goto(peopleLinks[i], {
       waitUntil: "networkidle2",
+      timeout: 120000,
     });
     console.log(peopleLinks[i] + " visited");
 

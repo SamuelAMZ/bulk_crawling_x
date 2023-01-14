@@ -22,8 +22,8 @@ const { setTimeout } = require("timers/promises");
 // functions imports
 const firstLoadPopupResolver = require("./closePopup/index");
 const cloudflareBypass = require("./cloudflareBypass/index");
-const grabLinks = require("./grabLinks/index");
-// const visitProfiles = require("./visiteProfiles/index");
+// const grabLinks = require("./grabLinks/index");
+const visitProfiles = require("./visiteProfiles/index");
 
 require("dotenv").config();
 
@@ -44,7 +44,11 @@ const scrapper = async (proxySession) => {
     args: [`--proxy-server=${proxySession}`],
   });
 
-  const page = await browser.newPage();
+  const context = await browser.createIncognitoBrowserContext();
+
+  const page = await context.newPage();
+
+  await page.authenticate({ username: "jwvcqoqc", password: "z5dc7uri8t3t" });
 
   //   user agent
   // Create random user-agent to be set through plugin
@@ -86,7 +90,14 @@ const scrapper = async (proxySession) => {
       await newInstance.p.waitForTimeout(3000);
 
       // grab links
-      await grabLinks(newInstance.p);
+      // await grabLinks(newInstance.p);
+
+      // visit profile and grab details
+      const ret = await visitProfiles(newInstance.p);
+
+      if (ret === "hide") {
+        return await browser.close();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -99,9 +110,13 @@ const scrapper = async (proxySession) => {
 
 // // new ip
 const go = async () => {
-  const proxySession = newProxy();
-  console.log(proxySession);
-  await scrapper(proxySession);
+  for (let pagesId = 0; pagesId < 30000; pagesId++) {
+    // new ip
+    const proxySession = newProxy();
+    console.log(proxySession);
+    // launch
+    await scrapper(proxySession);
+  }
 };
 
 go();
