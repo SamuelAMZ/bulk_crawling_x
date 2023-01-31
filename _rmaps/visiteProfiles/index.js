@@ -15,7 +15,7 @@ const visitProfiles = async (page) => {
   // wait 1sec for the array to be ready
   console.log("here");
 
-  const tempAll = await group2();
+  const tempAll = await group5();
 
   // loop to visit one
   for (let i = 0; i < tempAll.length; i++) {
@@ -24,7 +24,7 @@ const visitProfiles = async (page) => {
     try {
       const isNeeded = await checkIndependant(tempAll[i]);
       if (isNeeded) {
-        console.log("already");
+        console.log("already", " ", i);
         continue;
       }
     } catch (error) {

@@ -39,10 +39,12 @@ mongoose.connect(process.env.DBURI, (err) => {
 
 const scrapper = async (proxySession, randomPage) => {
   // Create random user-agent to be set through plugin
-  const userAgentStr = randomUseragent.getRandom(function (ua) {
-    return parseFloat(ua.browserVersion) >= 20;
-  });
-  console.log(`User Agent: ${userAgentStr}`);
+  // const userAgentStr = randomUseragent.getRandom(function (ua) {
+  //   return parseFloat(ua.browserVersion) >= 20;
+  // });
+  // console.log(`User Agent: ${userAgentStr}`);
+
+  // const paths = "C:\\puppeteer\\ext\\ljdekjlhpjggcjblfgpijbkmpihjfkni\\";
 
   const browser = await puppeteer.launch({
     headless: false,
@@ -61,12 +63,17 @@ const scrapper = async (proxySession, randomPage) => {
       "--ignore-certifcate-errors",
       "--ignore-certifcate-errors-spki-list",
       "--no-zygote",
-      // "--single-process",
-      "--disable-gpu",
-      // "--enable-features=NetworkService",
+      // // "--single-process",
+      // "--disable-gpu",
+      "--enable-features=NetworkService",
       `--proxy-server=${proxySession}`,
       // "--proxy-bypass-list=*",
+      "--user-data-dir=%userprofile%\\AppData\\Local\\Chrome\\User Data",
+      "--profile-directory=Profile 2",
+      // `--disable-extensions-except=${paths}`,
+      // `--load-extension=${paths}`,
     ],
+    executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
   });
 
   // const context = await browser.createIncognitoBrowserContext();
@@ -75,8 +82,8 @@ const scrapper = async (proxySession, randomPage) => {
 
   await page.authenticate({ username: "jwvcqoqc", password: "z5dc7uri8t3t" });
 
-  await page.setUserAgent(userAgentStr);
-  console.log(await page.evaluate("navigator.userAgent"));
+  // await page.setUserAgent(userAgentStr);
+  // console.log(await page.evaluate("navigator.userAgent"));
 
   // block images and css...
   blockResourcesPlugin.blockedTypes.add("media");
@@ -89,8 +96,7 @@ const scrapper = async (proxySession, randomPage) => {
   // await page.goto("https://whatismyipaddress.com/", {
   //   waitUntil: "networkidle2",
   // });
-
-  // await page.waitForTimeout(10000);
+  // await page.waitForTimeout(150000);
 
   try {
     await page.goto(`${process.env.ENTRY}${randomPage}`, {

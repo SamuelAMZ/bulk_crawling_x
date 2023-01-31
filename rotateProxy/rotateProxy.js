@@ -104,6 +104,8 @@ const newProxy = () => {
     `${process.env.PROXY98}`,
     `${process.env.PROXY99}`,
     `${process.env.PROXY100}`,
+    `${process.env.PROXY101}`,
+    `${process.env.PROXY102}`,
   ];
 
   let random = Math.floor(Math.random() * 97);

@@ -1230,7 +1230,7 @@ const grabInfo = async (page, profileLink) => {
 
   try {
     const genderSelector = await page.waitForSelector(
-      "#main-content > div:nth-child(4) > div.row.position-relative > div > div > span:nth-child(5)",
+      "#main-content > div:nth-child(4) > div.row.position-relative > div > div > span:last-child",
       {
         timeout: 500,
       }
@@ -1246,7 +1246,7 @@ const grabInfo = async (page, profileLink) => {
   let city = "";
   try {
     const countrySelector = await page.waitForSelector(
-      "#main-content > div:nth-child(4) > div.row.position-relative > div > div > span:nth-child(3) > a",
+      "#main-content > div:nth-child(4) > div.row.position-relative > div > div a",
       {
         timeout: 500,
       }
