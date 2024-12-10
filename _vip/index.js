@@ -1,22 +1,4 @@
-const puppeteer = require("puppeteer-extra");
-
-// add stealth plugin and use defaults (all evasion techniques)
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-
-// ressource blocker
-const blockResourcesPlugin =
-  require("puppeteer-extra-plugin-block-resources")();
-puppeteer.use(blockResourcesPlugin);
-
-// user agent plugin
-const UserAgent = require("user-agents");
-const randomUseragent = require("random-useragent");
-
-// proxy provider
 const newProxy = require("../rotateProxy/rotateProxy");
-
-// node built in waiter
 const { setTimeout } = require("timers/promises");
 
 // functions imports
@@ -26,87 +8,71 @@ const nextPage = require("./next/index");
 const checkIndependant = require("../db/checkIndependant");
 const addNewIndependant = require("../db/addNewIndependant");
 
+const { newBrowser } = require("./utils/newBrowser");
+const { getConfigPuppeteer } = require("./utils/configPuppeteer");
+const { newPage } = require("./utils/newPage");
+const { connectedToDatabase } = require("./utils/connectedToDatabase");
 require("dotenv").config();
 
-// connect to db
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-mongoose.connect(process.env.DBURI, (err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("connected to db");
-  }
-});
+// Initialize database connection
+connectedToDatabase();
 
 const scrapper = async (proxySession) => {
-  // Create random user-agent to be set through plugin
-  // const userAgentStr = randomUseragent.getRandom(function (ua) {
-  //   return ua.browserName === "Chrome";
-  // });
-  // console.log(`User Agent: ${userAgentStr}`);
+  const { puppeteer } = getConfigPuppeteer();
 
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--disable-infobars",
-      "--window-position=0,0",
-      "--ignore-certifcate-errors",
-      "--ignore-certifcate-errors-spki-list",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-      `--proxy-server=${proxySession}`,
-    ],
-  });
+  console.log(`[INFO] Initializing browser for scraping...`);
+  const { browser } = (await newBrowser(puppeteer, proxySession)) || {};
+  if (!browser) {
+    console.error("[ERROR] Failed to launch browser");
+    return;
+  }
+  console.log(`[INFO] Browser initialized successfully.`);
 
-  const page = await browser.newPage();
-  // await page.setUserAgent(userAgentStr);
-
-  await page.setViewport({
-    width: 1840,
-    height: 1080,
-    deviceScaleFactor: 1,
-  });
-
-  // console.log(await page.evaluate("navigator.userAgent"));
-
-  // block images and css...
-  blockResourcesPlugin.blockedTypes.add("media");
-  blockResourcesPlugin.blockedTypes.add("stylesheet");
-  blockResourcesPlugin.blockedTypes.add("image");
-  blockResourcesPlugin.blockedTypes.add("font");
-  blockResourcesPlugin.blockedTypes.add("xhr");
-
+  const page = await newPage(browser);
   try {
-    await page.goto(`${process.env.ENTRYVIP}`, {
+    const targetUrl = `${process.env.VIP_ENTRY}`;
+    console.log(
+      `[INFO] Navigating to ${targetUrl} using proxy: ${proxySession}`
+    );
+
+    if (!targetUrl) {
+      console.error("[ERROR] target URL can't be null");
+      return;
+    }
+
+    try {
+      new URL(targetUrl?.trim());
+    } catch (error) {
+      console.error("[ERROR] Invalid URL");
+    }
+
+    await page.goto(targetUrl, {
       waitUntil: "networkidle2",
+      timeout: 120000,
     });
 
     //   check if popup apears and close it
+    console.log(`[INFO] Resolving pop-ups if present...`);
     await firstLoadPopupResolver(page);
     await page.waitForTimeout(500);
   } catch (error) {
-    console.log(error, proxySession);
+    console.log(error.message, proxySession);
   }
 
   while (true) {
     // check if it needs to be added or not
     const currentPage = await page.url();
+    console.log("[INFO] Check data in DB");
     const isNeeded = await checkIndependant(currentPage);
 
     if (isNeeded) {
-      console.log(currentPage + " already");
+      console.log("[INFO] already in db", currentPage);
       try {
         await nextPage(page);
       } catch (error) {
-        console.log(error);
+        console.error(`[ERROR] ${error.message}`);
         await browser.close();
+        console.log("[INFO] Browser closed.");
       }
     }
 
@@ -116,15 +82,17 @@ const scrapper = async (proxySession) => {
       // add to db
       await addNewIndependant(data[0]);
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
     }
 
     //   next page
     try {
       await nextPage(page);
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
+      console.error(`[ERROR] ${error.message}`);
       await browser.close();
+      console.log("[INFO] Browser closed.");
     }
   }
 };
