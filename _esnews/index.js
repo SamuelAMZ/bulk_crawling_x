@@ -6,6 +6,7 @@ const { newBrowser } = require("./utils/newBrowser");
 const { getConfigPuppeteer } = require("./utils/configPuppeteer");
 const { newPage } = require("./utils/newPage");
 const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
 require("dotenv").config();
 
 // Initialize database connection
@@ -41,7 +42,7 @@ const scrapper = async (proxySession) => {
   console.log("[INFO] Browser initialized successfully.");
 
   const page = await newPage(browser);
-  const targetUrl = "https://escortnews.eu";
+  const targetUrl = entry();
 
   if (!targetUrl) {
     console.error("[ERROR] Target URL cannot be null.");

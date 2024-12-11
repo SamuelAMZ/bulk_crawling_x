@@ -1,22 +1,33 @@
-// detect the first popup and close it
-
+/**
+ * Resolves the first popup by interacting with its elements.
+ * @param {object} page - Puppeteer page instance.
+ */
 const firstLoadPopupResolver = async (page) => {
   try {
-    await page.waitForSelector(".modal-content", {
-      timeout: 10000,
-    });
+    console.log("[INFO] Waiting for popup to appear...");
+    await page.waitForSelector(".modal-content", { timeout: 10000 });
 
-    // first btn
+    // Interact with the first button
     const button1 = await page.$(".form-check-input");
-    await button1.evaluate((b) => b.click());
+    if (button1) {
+      await button1.evaluate((b) => b.click());
+      console.log("[INFO] First popup button clicked.");
+    } else {
+      console.warn("[WARN] First popup button not found.");
+    }
 
-    // second
+    // Interact with the second button
     const button2 = await page.$(".btn.btn-warning.closeOverlay");
-    await button2.evaluate((b) => b.click());
+    if (button2) {
+      await button2.evaluate((b) => b.click());
+      console.log("[INFO] Second popup button clicked.");
+    } else {
+      console.warn("[WARN] Second popup button not found.");
+    }
 
-    console.log("popup closed");
+    console.log("[INFO] Popup resolved successfully.");
   } catch (error) {
-    console.log(error);
+    console.error(`[ERROR] Failed to resolve popup: ${error.message}`);
   }
 };
 
