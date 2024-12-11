@@ -1,10 +1,7 @@
-const { getCountryCodes } = require("../utils/getCountryCodes");
-
 const grabInfo = async (page) => {
   try {
     // all single info
     const data = [];
-    const countryCodes = getCountryCodes();
 
     // name
     let name = "";

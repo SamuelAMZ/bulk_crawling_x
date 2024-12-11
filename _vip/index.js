@@ -1,5 +1,4 @@
 const newProxy = require("../rotateProxy/rotateProxy");
-const { setTimeout } = require("timers/promises");
 
 // functions imports
 const firstLoadPopupResolver = require("./closePopup/index");
@@ -12,6 +11,7 @@ const { newBrowser } = require("./utils/newBrowser");
 const { getConfigPuppeteer } = require("./utils/configPuppeteer");
 const { newPage } = require("./utils/newPage");
 const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
 require("dotenv").config();
 
 // Initialize database connection
@@ -30,7 +30,7 @@ const scrapper = async (proxySession) => {
 
   const page = await newPage(browser);
   try {
-    const targetUrl = `${process.env.VIP_ENTRY}`;
+    const targetUrl = entry();
     console.log(
       `[INFO] Navigating to ${targetUrl} using proxy: ${proxySession}`
     );

@@ -8,6 +8,7 @@ const { newBrowser } = require("./utils/newBrowser");
 const { getConfigPuppeteer } = require("./utils/configPuppeteer");
 const { newPage } = require("./utils/newPage");
 const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
 require("dotenv").config();
 
 // Initialize database connection
@@ -31,7 +32,7 @@ const scrapper = async (proxySession, pageIndex) => {
 
   const page = await newPage(browser);
   try {
-    const targetUrl = `${process.env.TRYST_ENTRY}${pageIndex}`;
+    const targetUrl = `${entry()}${pageIndex}`;
     console.log(
       `[INFO] Navigating to ${targetUrl} using proxy: ${proxySession}`
     );
