@@ -1,50 +1,41 @@
-// split countries in 5 smaller groups
-// node built in waiter
-const { setTimeout } = require("timers/promises");
-const {
-  group1,
-  group2,
-  group3,
-  group4,
-  group5,
-} = require("../countriesGroups/index");
 const addNewIndependant = require("../../db/addNewIndependant");
 const checkIndependant = require("../../db/checkIndependant");
 const grabDetails = require("../grabDetails/index");
 
-const visitProfiles = async (page) => {
-  // wait 1sec for the array to be ready
-  console.log("here");
-
-  const tempAll = await group5();
-
-  // loop to visit one
-  for (let i = 0; i < tempAll.length; i++) {
-    console.log("now", i);
+const visitProfiles = async (page, link) => {
+  try {
     // verify if link is not already in db
-    const isNeeded = await checkIndependant(tempAll[i]);
-    if (isNeeded) {
-      console.log("already");
-      continue;
+    try {
+      // check if it needs to be added or not
+      console.log("[INFO] Check data in DB");
+      const isNeeded = await checkIndependant(link);
+      if (isNeeded) {
+        console.log("[INFO] already in db");
+        return;
+      }
+    } catch (error) {
+      console.log(error?.message || error);
     }
 
-    // visite profile
-    try {
-      await page.goto(tempAll[i], {
-        waitUntil: "networkidle2",
-        timeout: 120000,
-      });
-    } catch (error) {
-      console.log(error, "navigation error");
-      continue;
-    }
+    // go to link
+
+    await page.goto(link, {
+      waitUntil: "networkidle2",
+      timeout: 60000,
+    });
+    console.log(`[INFO] scraping ${link}`);
 
     // grab details
     await page.waitForTimeout(1000);
-    const data = await grabDetails(page, tempAll[i]);
-
-    // add to db
-    await addNewIndependant(data[0]);
+    try {
+      const data = await grabDetails(page, link);
+      // add to db
+      await addNewIndependant(data[0]);
+    } catch (error) {
+      console.log(error?.message || error);
+    }
+  } catch (error) {
+    console.log(`[INFO] -- ${error.message}`);
   }
 };
 
