@@ -2,6 +2,21 @@
 const fs = require("fs");
 const { getPagination } = require("../utils/getPagination");
 
+function updatePaginatorPage(url, currentPage) {
+  // Regular expression to find and replace the `Page<number>` segment
+  const updatedUrl = url.replace(
+    /\/Page\d+\.html$/,
+    `/Page${currentPage}.html`
+  );
+
+  // If no match is found (no `Page<number>` in the URL), append it
+  if (updatedUrl === url) {
+    return `${url}/Page${currentPage}.html`;
+  }
+
+  return updatedUrl;
+}
+
 const individualPageLinks = async (page, link) => {
   try {
     const linksArr = [];
@@ -28,7 +43,7 @@ const individualPageLinks = async (page, link) => {
 
     // loop to get links from all pagination pages
     for (let go = currentPage; go <= totalPages; go++) {
-      console.log("[INFO] pagination index:", go);
+      console.log("[INFO] Current index:", go);
       // grab links
       let currentPageUrls = [];
       try {
@@ -65,7 +80,7 @@ const individualPageLinks = async (page, link) => {
 
       try {
         // next link
-        const nextPageLink = `${link}/Page${go + 1}.html`;
+        const nextPageLink = updatePaginatorPage(link, go + 1);
         await page.goto(`${nextPageLink}`, {
           waitUntil: "networkidle2",
           timeout: 60000,
