@@ -1,94 +1,87 @@
-const puppeteer = require("puppeteer-extra");
-
-// add stealth plugin and use defaults (all evasion techniques)
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-
-// ressource blocker
-const blockResourcesPlugin =
-  require("puppeteer-extra-plugin-block-resources")();
-puppeteer.use(blockResourcesPlugin);
-
-// user agent plugin
-const UserAgent = require("user-agents");
-const randomUseragent = require("random-useragent");
-
-// proxy provider
+// Imports
 const newProxy = require("../rotateProxy/rotateProxy");
-
-// functions imports
-const countriesLinks = require("./entry");
-const getAndStorePeopleInMemory = require("./grabLinkinMemory/index");
-const visitProfiles = require("./visitProfiles/index");
-
+const { newBrowser } = require("./utils/newBrowser");
+const { getConfigPuppeteer } = require("./utils/configPuppeteer");
+const { newPage } = require("./utils/newPage");
+const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
+const grabLinks = require("./grabLinks");
 require("dotenv").config();
 
-// connect to db
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-mongoose.connect(process.env.DBURI, (err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("connected to db");
-  }
-});
+// Initialize database connection
+connectedToDatabase();
 
+/**
+ * Scrapes a given page using a browser and stores data in memory.
+ * @param {string} proxySession - Proxy session to use for the browser.
+ */
 const scrapper = async (proxySession) => {
-  const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: {
-      width: 1920,
-      height: 1080,
-    },
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--disable-infobars",
-      "--window-position=0,0",
-      "--ignore-certifcate-errors",
-      "--ignore-certifcate-errors-spki-list",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-      `--proxy-server=${proxySession}`,
-    ],
-  });
+  const { puppeteer } = getConfigPuppeteer();
 
-  const page = await browser.newPage();
-
-  // block images and css...
-  blockResourcesPlugin.blockedTypes.add("media");
-  blockResourcesPlugin.blockedTypes.add("stylesheet");
-  blockResourcesPlugin.blockedTypes.add("image");
-  blockResourcesPlugin.blockedTypes.add("font");
-  blockResourcesPlugin.blockedTypes.add("other");
-
-  for (let i = 0; i < countriesLinks.length; i++) {
-    // visit loop one by one entry
-    await page.goto(countriesLinks[i], {
-      waitUntil: "networkidle2",
-      timeout: 120000,
-    });
-
-    // store in memory
-    const people = await getAndStorePeopleInMemory(page);
-
-    // visit profiles loop
-    await visitProfiles(page, people);
+  console.log(`[INFO] Initializing browser for scraping...`);
+  const { browser } = (await newBrowser(puppeteer, proxySession)) || {};
+  if (!browser) {
+    console.error("[ERROR] Failed to launch browser");
+    return;
   }
+  console.log(`[INFO] Browser initialized successfully.`);
 
-  await browser.close();
+  const page = await newPage(browser);
+  try {
+    // visit loop one by one entry
+    const targetUrl = entry();
+
+    console.log(
+      `[INFO] Navigating to ${targetUrl} using proxy: ${proxySession}`
+    );
+
+    if (!targetUrl) {
+      console.error("[ERROR] target URL can't be null");
+      return;
+    }
+
+    try {
+      new URL(targetUrl?.trim());
+    } catch (error) {
+      console.error("[ERROR] Invalid URL");
+      return;
+    }
+
+    try {
+      await page.goto(targetUrl, {
+        waitUntil: "networkidle2",
+        timeout: 120000,
+      });
+    } catch (error) {
+      console.error(`[ERROR] Error during scraping: ${error.message}`, {
+        proxySession,
+      });
+    }
+
+    try {
+      console.log("[INFO] Scraping links");
+      await grabLinks(page);
+    } catch (error) {
+      console.error(`[ERROR] Error while scraping links: ${error.message}`);
+    }
+  } catch (error) {
+    console.log(error?.message || error);
+    console.error(`[ERROR] Error during scraping: ${error.message}`, {
+      proxySession,
+    });
+  } finally {
+    console.log("[INFO] Closing browser...");
+    await browser.close();
+  }
 };
 
 // new ip
 const go = async () => {
   const proxySession = newProxy();
   console.log(proxySession);
+  console.log("[INFO] Starting scraping process...");
   await scrapper(proxySession);
+  console.log("[INFO] Scraping ended...");
 };
 
 go();

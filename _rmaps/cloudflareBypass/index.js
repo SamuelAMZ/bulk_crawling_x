@@ -21,7 +21,7 @@ const cloudflareBypass = async (page, browser) => {
       // return new clouflaredLess page
       return { p: newCreatedPage, b: newBrowser, status: "ok" };
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
       console.log("cloudflare fails");
 
       // close browser

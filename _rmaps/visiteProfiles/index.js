@@ -11,6 +11,11 @@ const addNewIndependant = require("../../db/addNewIndependant");
 const checkIndependant = require("../../db/checkIndependant");
 const grabDetails = require("../grabDetails/index");
 
+/**
+ *
+ * @param {object} page - puppeteer instance
+ * @returns
+ */
 const visitProfiles = async (page) => {
   // wait 1sec for the array to be ready
   console.log("here");
@@ -19,16 +24,16 @@ const visitProfiles = async (page) => {
 
   // loop to visit one
   for (let i = 0; i < tempAll.length; i++) {
-    console.log("now");
-    // verify if link is not already in db
     try {
+      // check if it needs to be added or not
+      console.log("[INFO] Check data in DB");
       const isNeeded = await checkIndependant(tempAll[i]);
       if (isNeeded) {
-        console.log("already", " ", i);
+        console.log("[INFO] already in db");
         continue;
       }
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
     }
 
     // visite profile
@@ -38,9 +43,11 @@ const visitProfiles = async (page) => {
         timeout: 120000,
       });
     } catch (error) {
-      console.log(error, "navigation error");
+      console.log(`[ERROR] -- navigation error ${error.messgae}`);
       continue;
     }
+
+    console.log(tempAll[i] + " visited");
 
     try {
       // check for cloudflare
@@ -49,7 +56,7 @@ const visitProfiles = async (page) => {
         timeout: 240000,
       });
     } catch (error) {
-      console.log(error, "cloudflare error, on single profiles visit");
+      console.log(error.message, "[ERROR] Cloudflare error, on single profiles visit");
       continue;
     }
 
@@ -60,10 +67,11 @@ const visitProfiles = async (page) => {
       await page.waitForSelector(SITE_BLOCK_CLASS, {
         timeout: 1500,
       });
-      console.log("site block");
+      console.log("[ERROR] Site is blocked");
       return "hide";
     } catch (error) {
       console.log("no block");
+      console.log("[INFO] Site not blocked")
     }
 
     // grab details
@@ -73,7 +81,7 @@ const visitProfiles = async (page) => {
       // add to db
       await addNewIndependant(data[0]);
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
     }
   }
 };

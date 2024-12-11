@@ -37,8 +37,8 @@ const individualPageLinks = async (page, link) => {
     try {
       let totalPages = await page.evaluate(() => {
         let arrText = document
-          .querySelector("#container > h1")
-          .innerText.split("-");
+          ?.querySelector("#container > h1")
+          ?.innerText.split("-");
         return Number(arrText[arrText.length - 1].trim());
       });
 
@@ -46,7 +46,7 @@ const individualPageLinks = async (page, link) => {
       numberOfPage = Math.ceil(totalPages / ITEM_PER_PAGE);
       console.log(numberOfPage);
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
     }
   }
 
@@ -59,9 +59,9 @@ const individualPageLinks = async (page, link) => {
         const arr = [];
         Array.from(document.querySelectorAll("#container > .rows")).forEach(
           (elm) => {
-            Array.from(elm.children).forEach((c) => {
-              if (c.querySelector("a")) {
-                arr.push(c.querySelector("a").href);
+            Array.from(elm?.children).forEach((c) => {
+              if (c?.querySelector("a")) {
+                arr?.push(c?.querySelector("a")?.href);
               }
             });
           }
@@ -69,7 +69,7 @@ const individualPageLinks = async (page, link) => {
         return arr;
       });
     } catch (error) {
-      console.log(error);
+      console.log(error?.message || error);
     }
     // push to arr
     linksArr.push(...singlePage);
@@ -89,7 +89,7 @@ const individualPageLinks = async (page, link) => {
 
   // generate json file from linksArr
   let json = JSON.stringify({ data: linksArr });
-  const countryNameArr = link.split("/");
+  const countryNameArr = link?.split("/");
   const countryName = countryNameArr[countryNameArr.length - 1].replace(
     "#rubmaps",
     ""

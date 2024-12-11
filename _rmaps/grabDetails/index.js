@@ -8,11 +8,11 @@ const grabDetails = async (page, actualLink) => {
   let name = "";
   try {
     const nameSelector = await page.waitForSelector(".titlu #qe_name", {
-      timeout: 500,
+      timeout: 5000,
     });
-    name = await nameSelector.evaluate((el) => el.innerText);
+    name = await nameSelector?.evaluate((el) => el?.innerText);
   } catch (error) {
-    console.log(error);
+    console.log(error?.message || error);
   }
 
   // gender
@@ -26,13 +26,13 @@ const grabDetails = async (page, actualLink) => {
 
   try {
     const citySelector = await page.waitForSelector(".titlu", {
-      timeout: 500,
+      timeout: 5000,
     });
     city = await citySelector.evaluate((el) =>
-      el.innerText.split("in")[1].trim().split(",")[0].trim()
+      el?.innerText?.split("in")[1]?.trim()?.split(",")[0]?.trim()
     );
   } catch (error) {
-    console.log(error);
+    console.log(error?.message || error);
   }
 
   // sms
@@ -41,36 +41,36 @@ const grabDetails = async (page, actualLink) => {
     const smsSelector = await page.waitForSelector(
       "#qe_phone_number span.m_hide",
       {
-        timeout: 500,
+        timeout: 5000,
       }
     );
     sms = await smsSelector.evaluate((el) =>
-      el.innerText.replace(" ", "").replaceAll("-", "").trim()
+      el?.innerText?.replace(" ", "")?.replaceAll("-", "")?.trim()
     );
   } catch (error) {
-    // console.log(error);
+    // console.log(error?.message || error);
   }
 
   // email
   let email = "";
   try {
     const emailSelector = await page.waitForSelector("#qe_email", {
-      timeout: 500,
+      timeout: 5000,
     });
-    email = await emailSelector.evaluate((el) => el.innerText);
+    email = await emailSelector?.evaluate((el) => el?.innerText);
   } catch (error) {
-    // console.log(error);
+    // console.log(error?.message || error);
   }
 
   // website
   let website = "";
   try {
     const websiteSelector = await page.waitForSelector("#qe_website span", {
-      timeout: 500,
+      timeout: 5000,
     });
-    website = await websiteSelector.evaluate((el) => el.innerText);
+    website = await websiteSelector?.evaluate((el) => el?.innerText);
   } catch (error) {
-    // console.log(error);
+    // console.log(error?.message || error);
   }
 
   let twitter = "";
@@ -83,12 +83,12 @@ const grabDetails = async (page, actualLink) => {
     const profileImagesSelector = await page.waitForSelector(
       "#photo_premium_click img",
       {
-        timeout: 500,
+        timeout: 5000,
       }
     );
-    profileImages = [await profileImagesSelector.evaluate((el) => el.src)];
+    profileImages = [await profileImagesSelector?.evaluate((el) => el.src)];
   } catch (error) {
-    console.log(error);
+    console.log(error?.message || error);
   }
 
   // status
