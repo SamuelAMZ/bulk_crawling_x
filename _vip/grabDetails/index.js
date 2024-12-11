@@ -10,7 +10,7 @@ const grabInfo = async (page) => {
     let name = "";
     try {
       const nameSelector = await page.waitForSelector(".teaser .row h1", {
-        timeout: 500,
+        timeout: 5000,
       });
       name = await nameSelector?.evaluate((el) => el?.innerText);
     } catch (error) {
@@ -60,7 +60,7 @@ const grabInfo = async (page) => {
       const citySelector = await page.waitForSelector(
         "[itemprop*='homeLocation']",
         {
-          timeout: 500,
+          timeout: 5000,
         }
       );
       city = await citySelector?.evaluate((el) => el?.parentElement?.innerText);
@@ -213,7 +213,7 @@ const grabInfo = async (page) => {
       const statusSelector = await page.waitForSelector(
         ".teaser div.col-xs-12 h6.text-left.color-gray-label",
         {
-          timeout: 500,
+          timeout: 5000,
         }
       );
       status = await statusSelector.evaluate((el) => el?.innerText);

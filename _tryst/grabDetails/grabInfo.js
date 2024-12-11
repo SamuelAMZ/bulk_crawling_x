@@ -9,7 +9,7 @@ const grabInfo = async (page, profileLink) => {
   let name = "";
   try {
     const nameSelector = await page.waitForSelector("#profile-name", {
-      timeout: 500,
+      timeout: 5000,
     });
     name = await nameSelector.evaluate((el) => el?.textContent);
   } catch (error) {
@@ -23,7 +23,7 @@ const grabInfo = async (page, profileLink) => {
     const genderSelector = await page.waitForSelector(
       "#main-content > div:nth-child(4) > div.row.position-relative > div > div > span:last-child",
       {
-        timeout: 500,
+        timeout: 5000,
       }
     );
     gender = await genderSelector.evaluate((el) => el?.textContent);
@@ -39,7 +39,7 @@ const grabInfo = async (page, profileLink) => {
     const countrySelector = await page.waitForSelector(
       "#main-content > div:nth-child(4) > div.row.position-relative > div > div a",
       {
-        timeout: 500,
+        timeout: 5000,
       }
     );
     let countryCodeElm = await countrySelector.evaluate(
