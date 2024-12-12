@@ -1,20 +1,15 @@
-// proxy provider
-const newProxy = require("../rotateProxy/rotateProxy");
-
 // functions imports
 const firstLoadPopupResolver = require("./closePopup/index");
 const cloudflareBypass = require("./cloudflareBypass/index");
-// const grabLinks = require("./grabLinks/index");
-const visitProfiles = require("./visiteProfiles/index");
 
 // Imports
 const newProxy = require("../rotateProxy/rotateProxy");
-const { setTimeout } = require("timers/promises");
 const { newBrowser } = require("./utils/newBrowser");
 const { getConfigPuppeteer } = require("./utils/configPuppeteer");
 const { newPage } = require("./utils/newPage");
 const { connectedToDatabase } = require("./utils/connectedToDatabase");
 const entry = require("./entry");
+const grabLinks = require("./grablinks");
 require("dotenv").config();
 
 // Initialize database connection
@@ -38,7 +33,7 @@ const scrapper = async (proxySession) => {
   const context = await browser.createIncognitoBrowserContext();
 
   // const page = await context.newPage();
-  const page = await newPage(context);
+  const page = await newPage(browser);
 
   // await page.authenticate({ username: "jwvcqoqc", password: "z5dc7uri8t3t" });
 
@@ -50,34 +45,48 @@ const scrapper = async (proxySession) => {
   });
   await page.waitForTimeout(2000);
 
-  // cloudflare bypass
-  const newInstance = await cloudflareBypass(page, browser);
-
-  if (newInstance.status === "ok") {
-    console.log("[INFO] cloudflare bypass");
-    try {
-      //   close popup
-      await firstLoadPopupResolver(newInstance.p);
-
-      await newInstance.p.waitForTimeout(3000);
-
-      // grab links
-      // await grabLinks(newInstance.p);
-
-      // visit profile and grab details
-      const ret = await visitProfiles(newInstance.p);
-
-      if (ret === "hide") {
-        return await browser.close();
-      }
-    } catch (error) {
-      console.log(error?.message || error);
-    }
-
-    await newInstance.b.close();
-  } else {
-    await newInstance.b.close();
+  try {
+    //   close popup
+    await firstLoadPopupResolver(page);
+  } catch (error) {
+    console.log("[ERROR] failed to close popup", error.message);
   }
+
+  try {
+    console.log("[INFO] Scraping links");
+    await grabLinks(page);
+  } catch (error) {
+    console.error(`[ERROR] Error while scraping links: ${error.message}`);
+  }
+
+  // // cloudflare bypass
+  // // const newInstance = await cloudflareBypass(page, browser);
+
+  // // if (newInstance.status === "ok") {
+  // //   console.log("[INFO] cloudflare bypass");
+  //   try {
+  //     //   close popup
+  //     await firstLoadPopupResolver(page);
+
+  //     await page.waitForTimeout(3000);
+
+  //     // grab links
+  //     // await grabLinks(page);
+
+  //     // visit profile and grab details
+  //     const ret = await visitProfiles(page);
+
+  //     if (ret === "hide") {
+  //       return await browser.close();
+  //     }
+  //   } catch (error) {
+  //     console.log(error?.message || error);
+  //   }
+
+  //   await newInstance.b.close();
+  // // } else {
+  // //   await newInstance.b.close();
+  // // }
 };
 
 // // new ip

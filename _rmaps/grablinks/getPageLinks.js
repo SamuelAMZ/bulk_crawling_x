@@ -1,105 +1,97 @@
 // get individual page links and create json file of it
 const fs = require("fs");
+const { getPagination } = require("../utils/getPagination.js");
+
+function updatePaginatorPage(url, currentPage) {
+  // Regular expression to check if the URL already ends with `-<number>`
+  const regex = /-\d+$/;
+
+  // Check if the URL ends with `-<number>` and replace it with the new page number
+  if (regex.test(url)) {
+    return url.replace(regex, `-${currentPage}`);
+  }
+
+  // If no match is found, append the `-<currentPage>` to the URL
+  return `${url}-${currentPage}`;
+}
 
 const individualPageLinks = async (page, link) => {
-  const linksArr = [];
-  // go to link
-  await page.goto(link, {
-    waitUntil: "networkidle2",
-    timeout: 60000,
-  });
-
-  // check for cloudflare
-  const PAGE_HEADER_CLASS = "#head-logo";
-  await page.waitForSelector(PAGE_HEADER_CLASS, {
-    timeout: 240000,
-  });
-
-  // wait 1sec
-  await page.waitForTimeout(1000);
-
-  // paginate if exist (give links to linksArr before each paginate)
-  // detect pagination
-  let isPagination = false;
   try {
-    await page.waitForSelector(".blue-stripe .pagination", {
-      timeout: 1000,
-    });
-    isPagination = true;
-  } catch (error) {
-    isPagination = false;
-  }
-
-  // detect how many pages paginate get
-  let numberOfPage = 1;
-
-  if (isPagination) {
-    try {
-      let totalPages = await page.evaluate(() => {
-        let arrText = document
-          ?.querySelector("#container > h1")
-          ?.innerText.split("-");
-        return Number(arrText[arrText.length - 1].trim());
-      });
-
-      let ITEM_PER_PAGE = 15;
-      numberOfPage = Math.ceil(totalPages / ITEM_PER_PAGE);
-      console.log(numberOfPage);
-    } catch (error) {
-      console.log(error?.message || error);
-    }
-  }
-
-  // loop to get links from all pagination pages
-  for (let go = 0; go < numberOfPage; go++) {
-    // grab links
-    let singlePage = "";
-    try {
-      singlePage = await page.evaluate(() => {
-        const arr = [];
-        Array.from(document.querySelectorAll("#container > .rows")).forEach(
-          (elm) => {
-            Array.from(elm?.children).forEach((c) => {
-              if (c?.querySelector("a")) {
-                arr?.push(c?.querySelector("a")?.href);
-              }
-            });
-          }
-        );
-        return arr;
-      });
-    } catch (error) {
-      console.log(error?.message || error);
-    }
-    // push to arr
-    linksArr.push(...singlePage);
-    console.log(linksArr.length);
-
-    // next link
-    await page.goto(`${link}-${go + 2}`, {
+    const linksArr = [];
+    // go to link
+    await page.goto(link, {
       waitUntil: "networkidle2",
       timeout: 60000,
     });
+    console.log("[INFO] current URL", link);
 
-    // wait 2sec
-    await page.waitForTimeout(1000);
+    // detect hom many pages paginate get
+    console.log("[INFO] Getting pagination");
+    const { totalPages, currentPage } = await getPagination(page);
+
+    // loop to get links from all pagination pages
+    for (let go = currentPage; go <= totalPages; go++) {
+      console.log("[INFO] Current index:", go);
+      // grab links
+      let currentPageUrls = [];
+      try {
+        currentPageUrls = await page.evaluate(() => {
+          const arr = [];
+          Array.from(document.querySelectorAll("#container > .rows")).forEach(
+            (elm) => {
+              Array.from(elm?.children).forEach((c) => {
+                if (c?.querySelector("a")) {
+                  arr?.push(c?.querySelector("a")?.href);
+                }
+              });
+            }
+          );
+          return arr;
+        });
+      } catch (error) {
+        console.log(error?.message || error);
+      }
+
+      console.log(
+        `[INFO] Found ${currentPageUrls.length} links for  ${page.url()}`
+      );
+      // push to arr
+      linksArr.push(...currentPageUrls);
+      console.log(
+        "[INFO] Pagination index:",
+        go,
+        "Found",
+        currentPageUrls.length,
+        "Total links:",
+        linksArr.length
+      );
+
+      try {
+        // next link
+        const nextPageLink = updatePaginatorPage(link, go + 1);
+
+        await page.goto(nextPageLink, {
+          waitUntil: "networkidle2",
+          timeout: 60000,
+        });
+      } catch (error) {
+        console.log(
+          `[ERROR] -- ${nextPageLink} navigation error: ${error.message}`
+        );
+      }
+
+      try {
+        // wait 2sec
+        await page.waitForTimeout(2000);
+      } catch (error) {
+        console.log("[ERROR] check for cloudflare", error.message);
+      }
+    }
+
+    return linksArr;
+  } catch (error) {
+    console.log(`[ERROR] --- ${error.message}`);
   }
-
-  console.log(linksArr, linksArr.length);
-
-  // generate json file from linksArr
-  let json = JSON.stringify({ data: linksArr });
-  const countryNameArr = link?.split("/");
-  const countryName = countryNameArr[countryNameArr.length - 1].replace(
-    "#rubmaps",
-    ""
-  );
-  const callback = () => {
-    console.log(countryName + " done!");
-  };
-  fs.writeFile(`${countryName}.json`, json, "utf8", callback);
-
-  // next country
 };
 
 module.exports = individualPageLinks;

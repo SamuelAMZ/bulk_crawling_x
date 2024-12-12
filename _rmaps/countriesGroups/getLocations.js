@@ -1,9 +1,7 @@
 const getLocations = async (page) => {
   try {
     const locations = await page.evaluate(() => {
-      const elmts = Array.from(
-        document.querySelectorAll("#js-country-list-openable a")
-      )
+      const elmts = Array.from(document.querySelectorAll("#states a"))
         .map((e) => e?.href)
         .filter((el) => el);
       return elmts;

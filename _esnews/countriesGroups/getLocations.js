@@ -5,7 +5,7 @@ const getLocations = async (page) => {
       Array.from(document.querySelectorAll(".cTitleN")).forEach((e) =>
         elmts.push(e?.querySelector("a")?.href)
       );
-      return elmts;
+      return elmts.filter((el) => el);
     });
 
     console.log(`[INFO] locations ${locations.length} found`);
