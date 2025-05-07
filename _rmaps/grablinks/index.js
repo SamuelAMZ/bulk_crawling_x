@@ -1,22 +1,32 @@
 // grab all links from site and stor then as json in profile folder
-const {
-  countriesLinks1,
-  countriesLinks2,
-  countriesLinks3,
-  countriesLinks4,
-  countriesLinks5,
-} = require("../entry");
 const individualPageLinks = require("./getPageLinks");
+const { getLocations } = require("../countriesGroups/getLocations");
+const visitProfiles = require("../visitProfiles/index");
+const firstLoadPopupResolver = require("../closePopup");
 
 const grabLinks = async (page) => {
-  console.log("paged");
-
-  // links loop
-  for (let i = 0; i < countriesLinks5.length; i++) {
-    await individualPageLinks(page, String(countriesLinks5[i]));
+  try {
+    //   close popup
+    await firstLoadPopupResolver(page);
+  } catch (error) {
+    console.log("[ERROR] failed to close popup", error.message);
   }
 
-  await page.waitForTimeout(5000);
+  try {
+    const locations = await getLocations(page);
+
+    for (let link of locations) {
+      console.log(`[INFO] Visiting page: ${link}`);
+
+      const linkArr = await individualPageLinks(page, link);
+
+      for (let href of linkArr) {
+        await visitProfiles(page, href);
+      }
+    }
+  } catch (error) {
+    console.log(`[INFO] -- ${error.message}`);
+  }
 };
 
 module.exports = grabLinks;

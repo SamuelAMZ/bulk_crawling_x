@@ -42,7 +42,7 @@ const addNewIndependant = async (newItem) => {
     await indep.save();
     console.log(`${newItem.name} added`);
   } catch (error) {
-    console.log(error);
+    console.log(error?.message || error);
   }
 };
 

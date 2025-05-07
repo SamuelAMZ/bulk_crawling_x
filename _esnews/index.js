@@ -1,110 +1,105 @@
-const puppeteer = require("puppeteer-extra");
-
-// add stealth plugin and use defaults (all evasion techniques)
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-
-// ressource blocker
-const blockResourcesPlugin =
-  require("puppeteer-extra-plugin-block-resources")();
-puppeteer.use(blockResourcesPlugin);
-
-// user agent plugin
-const UserAgent = require("user-agents");
-const randomUseragent = require("random-useragent");
-
-// proxy provider
 const newProxy = require("../rotateProxy/rotateProxy");
-
-// node built in waiter
-const { setTimeout } = require("timers/promises");
-
-// functions imports
 const grabLinks = require("./grabLinks/index");
 const cloudflareBypass = require("./cloudflareBypass/index");
-const visitProfiles = require("./visiteProfiles/index");
 
+const { newBrowser } = require("./utils/newBrowser");
+const { getConfigPuppeteer } = require("./utils/configPuppeteer");
+const { newPage } = require("./utils/newPage");
+const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
 require("dotenv").config();
 
-// connect to db
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-mongoose.connect(process.env.DBURI, (err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("connected to db");
+// Initialize database connection
+connectedToDatabase();
+
+/**
+ * Validates the provided URL.
+ * @param {string} url - URL to validate.
+ * @returns {boolean} - Returns true if valid, false otherwise.
+ */
+const validateUrl = (url) => {
+  try {
+    new URL(url.trim());
+    return true;
+  } catch {
+    return false;
   }
-});
-
-const scrapper = async (proxySession) => {
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: [`--proxy-server=${proxySession}`],
-  });
-
-  const page = await browser.newPage();
-
-  //   user agent
-  // Create random user-agent to be set through plugin
-  // const userAgentStr = randomUseragent.getRandom(function (ua) {
-  //   return parseFloat(ua.browserVersion) >= 20;
-  // });
-  // console.log(`User Agent: ${userAgentStr}`);
-  // await page.setUserAgent(userAgentStr);
-
-  await page.setViewport({
-    width: 1840,
-    height: 1080,
-    deviceScaleFactor: 1,
-  });
-
-  // block images and css...
-  // blockResourcesPlugin.blockedTypes.add("media");
-  // blockResourcesPlugin.blockedTypes.add("stylesheet");
-  // blockResourcesPlugin.blockedTypes.add("image");
-  // blockResourcesPlugin.blockedTypes.add("font");
-
-  // console.log(await page.evaluate("navigator.userAgent"));
-
-  // visit from the top of the archives
-  await page.goto("https://escortnews.eu", {
-    waitUntil: "networkidle2",
-    timeout: 120000,
-  });
-
-  // cloudflare bypass
-  const newInstance = await cloudflareBypass(page, browser);
-
-  if (newInstance.status === "ok") {
-    // grab links
-    // await grabLinks(newInstance.p);
-    try {
-      await visitProfiles(newInstance.p);
-    } catch (error) {
-      console.log(error);
-    }
-
-    await newInstance.b.close();
-  } else {
-    await newInstance.b.close();
-  }
-
-  // visite
-  // visite country array one by one
-  // scrall to bottom
-  // wait 20sec
-  // grab pages url
-  // paginate if exist
-  // ...
-  // create json file and store it with the country name
 };
 
-// // new ip
+/**
+ * Handles the scraping process for a given target URL and proxy session.
+ * @param {string} proxySession - Proxy session to use for the browser.
+ */
+const scrapper = async (proxySession) => {
+  const { puppeteer } = getConfigPuppeteer();
+  console.log(`[INFO] Initializing browser with proxy: ${proxySession}...`);
+
+  const { browser } = (await newBrowser(puppeteer, proxySession)) || {};
+  if (!browser) {
+    console.error("[ERROR] Failed to launch browser.");
+    return;
+  }
+  console.log("[INFO] Browser initialized successfully.");
+
+  const page = await newPage(browser);
+  const targetUrl = entry();
+
+  if (!targetUrl) {
+    console.error("[ERROR] Target URL cannot be null.");
+    await browser.close();
+    return;
+  }
+
+  if (!validateUrl(targetUrl)) {
+    console.error("[ERROR] Invalid target URL.");
+    await browser.close();
+    return;
+  }
+
+  try {
+    console.log(`[INFO] Navigating to ${targetUrl}...`);
+    await page.goto(targetUrl, {
+      waitUntil: "networkidle2",
+      timeout: 120000,
+    });
+
+    console.log(`[INFO] Attempting to bypass Cloudflare for ${targetUrl}...`);
+    const newInstance = await cloudflareBypass(page, browser);
+
+    if (newInstance.status === "ok") {
+      console.log("[INFO] Successfully bypassed Cloudflare.");
+      try {
+        console.log("[INFO] Visiting profiles...");
+        await grabLinks(newInstance.p);
+      } catch (error) {
+        console.error(
+          `[ERROR] Error while visiting profiles: ${error.message}`
+        );
+      }
+    } else {
+      console.error("[ERROR] Cloudflare bypass failed.");
+    }
+
+    console.log("[INFO] Closing browser instance...");
+    await newInstance.b.close();
+  } catch (error) {
+    console.error(`[ERROR] Error during scraping process: ${error.message}`);
+  } finally {
+    console.log("[INFO] Closing main browser...");
+    await browser.close();
+  }
+};
+
+/**
+ * Main execution function to initialize and start scraping.
+ */
 const go = async () => {
   const proxySession = newProxy();
-  console.log(proxySession);
+  console.log(`[INFO] Starting scraper with proxy: ${proxySession}`);
   await scrapper(proxySession);
 };
 
-go();
+// Execute the script
+go().catch((error) => {
+  console.error("[FATAL] Unhandled error in the scraping process:", error);
+});

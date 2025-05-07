@@ -1,152 +1,116 @@
-const puppeteer = require("puppeteer-extra");
-
-// add stealth plugin and use defaults (all evasion techniques)
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-
-// ressource blocker
-const blockResourcesPlugin =
-  require("puppeteer-extra-plugin-block-resources")();
-puppeteer.use(blockResourcesPlugin);
-
-// user agent plugin
-const UserAgent = require("user-agents");
-const randomUseragent = require("random-useragent");
-
-// proxy provider
+// Imports
 const newProxy = require("../rotateProxy/rotateProxy");
-
-// node built in waiter
 const { setTimeout } = require("timers/promises");
-
-// functions imports
 const firstLoadPopupResolver = require("./popupChecks/firstLoadPopupResolver");
 const getAndStorePeopleInMemory = require("./getAndStoreInMemory/getAndStorePeopleInMemory");
 const visitProfile = require("./visitProfiles/visitProfiles");
-
+const { newBrowser } = require("./utils/newBrowser");
+const { getConfigPuppeteer } = require("./utils/configPuppeteer");
+const { newPage } = require("./utils/newPage");
+const { connectedToDatabase } = require("./utils/connectedToDatabase");
+const entry = require("./entry");
 require("dotenv").config();
 
-// connect to db
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-mongoose.connect(process.env.DBURI, (err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("connected to db");
+// Initialize database connection
+connectedToDatabase();
+
+/**
+ * Scrapes a given page using a browser and stores data in memory.
+ * @param {string} proxySession - Proxy session to use for the browser.
+ * @param {number} pageIndex - Index of the random page to scrape.
+ */
+const scrapper = async (proxySession, pageIndex) => {
+  const { puppeteer } = getConfigPuppeteer();
+
+  console.log(`[INFO] Initializing browser for scraping...`);
+  const { browser } = (await newBrowser(puppeteer)) || {};
+  if (!browser) {
+    console.error("[ERROR] Failed to launch browser");
+    return;
   }
-});
+  console.log(`[INFO] Browser initialized successfully.`);
 
-const scrapper = async (proxySession, randomPage) => {
-  // Create random user-agent to be set through plugin
-  // const userAgentStr = randomUseragent.getRandom(function (ua) {
-  //   return parseFloat(ua.browserVersion) >= 20;
-  // });
-  // console.log(`User Agent: ${userAgentStr}`);
-
-  // const paths = "C:\\puppeteer\\ext\\ljdekjlhpjggcjblfgpijbkmpihjfkni\\";
-
-  const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: {
-      width: 1920,
-      height: 1080,
-    },
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--disable-infobars",
-      "--window-position=0,0",
-      "--ignore-certifcate-errors",
-      "--ignore-certifcate-errors-spki-list",
-      "--no-zygote",
-      // // "--single-process",
-      // "--disable-gpu",
-      "--enable-features=NetworkService",
-      `--proxy-server=${proxySession}`,
-      // "--proxy-bypass-list=*",
-      "--user-data-dir=%userprofile%\\AppData\\Local\\Chrome\\User Data",
-      "--profile-directory=Profile 2",
-      // `--disable-extensions-except=${paths}`,
-      // `--load-extension=${paths}`,
-    ],
-    executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
-  });
-
-  // const context = await browser.createIncognitoBrowserContext();
-  // Create a new page in a pristine context.
-  const page = await browser.newPage();
-
-  await page.authenticate({ username: "jwvcqoqc", password: "z5dc7uri8t3t" });
-
-  // await page.setUserAgent(userAgentStr);
-  // console.log(await page.evaluate("navigator.userAgent"));
-
-  // block images and css...
-  blockResourcesPlugin.blockedTypes.add("media");
-  blockResourcesPlugin.blockedTypes.add("image");
-  blockResourcesPlugin.blockedTypes.add("font");
-  blockResourcesPlugin.blockedTypes.add("other");
-
-  console.log(randomPage + " page");
-
-  // await page.goto("https://whatismyipaddress.com/", {
-  //   waitUntil: "networkidle2",
-  // });
-  // await page.waitForTimeout(150000);
-
+  const page = await newPage(browser);
   try {
-    await page.goto(`${process.env.ENTRY}${randomPage}`, {
+    const targetUrl = `${entry()}${pageIndex}`;
+    console.log(
+      `[INFO] Navigating to ${targetUrl} using proxy: ${proxySession}`
+    );
+
+    if (!targetUrl) {
+      console.error("[ERROR] target URL can't be null");
+      return;
+    }
+
+    try {
+      new URL(targetUrl?.trim());
+    } catch (error) {
+      console.error("[ERROR] Invalid URL");
+    }
+
+    await page.goto(targetUrl, {
       waitUntil: "networkidle2",
       timeout: 120000,
     });
-    //   check if popup apears and close it
+
+    console.log(`[INFO] Resolving pop-ups if present...`);
     await firstLoadPopupResolver(page);
+
+    console.log(`[INFO] Extracting and storing people links...`);
+    const peopleLinks = await getAndStorePeopleInMemory(page);
+
+    console.log(`[INFO] Visiting profiles...`);
+    const visitStatus = await visitProfile(peopleLinks, page, browser);
+
+    if (visitStatus === "hide") {
+      console.log("[INFO] Hiding detected, closing browser...");
+    }
   } catch (error) {
-    console.log(error, proxySession);
-    return await browser.close();
+    console.error(`[ERROR] Error during scraping: ${error.message}`, {
+      proxySession,
+    });
+  } finally {
+    console.log("[INFO] Closing browser...");
+    await browser.close();
   }
-  //   get and store page items url in memory array
-  const peopleLinksArr = await getAndStorePeopleInMemory(page);
-  //   visit each profile
-  const ret = await visitProfile(peopleLinksArr, page, browser);
-
-  if (ret === "hide") {
-    return await browser.close();
-  }
-
-  await browser.close();
 };
 
-// open run 24 times with an ip and then close
-// reopen with a new ip for 24 rounds
-
+/**
+ * Main function to coordinate the scraping process with rotating proxies.
+ */
 const go = async () => {
-  let round = 0;
+  const MAX_ROUNDS = 9;
+  const MAX_PAGES = 1066;
+  const WAIT_TIME = 20 * 60 * 1000; // 20 minutes
+  let roundCount = 0;
 
-  for (let pagesId = 1; pagesId < 662; pagesId++) {
-    // count for wait at the 25th
-    round++;
-    // new ip
+  console.log("[INFO] Starting scraping process...");
+
+  for (let pageIndex = 1; pageIndex <= MAX_PAGES; pageIndex++) {
+    roundCount++;
+
     const proxySession = newProxy();
-    // const proxySession = "gate.smartproxy.com:7000";
-
-    // random page
-    const randomPage = Math.floor(Math.random() * 662);
-    // launch
+    const randomPage = Math.floor(Math.random() * MAX_PAGES);
+    console.log(
+      `[INFO] Starting round ${roundCount}, page index: ${randomPage}, proxy: ${proxySession}`
+    );
     await scrapper(proxySession, randomPage);
 
-    // if round === 100 wait 20mins
-    let TWENTYMINS = 1200000;
-    if (round >= 9) {
-      console.log("sleeping...");
-      await setTimeout(TWENTYMINS);
-      round = 0;
+    if (roundCount >= MAX_ROUNDS) {
+      console.log(
+        `[INFO] Completed ${MAX_ROUNDS} rounds. Sleeping for ${
+          WAIT_TIME / 60000
+        } minutes...`
+      );
+      await setTimeout(WAIT_TIME);
+      roundCount = 0;
     }
   }
+
+  console.log("[INFO] Scraping process completed.");
 };
 
-go();
+// Execute the script
+go().catch((error) => {
+  console.error("[FATAL] Unhandled error in the scraping process:", error);
+});

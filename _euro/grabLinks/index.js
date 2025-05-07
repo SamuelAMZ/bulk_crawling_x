@@ -1,16 +1,25 @@
 // grab all links from site and stor then as json in profile folder
-const countriesLinks = require("../entry");
 const individualPageLinks = require("./getPageLinks");
+const { getLocations } = require("../countriesGroups/getLocations");
+const visiteProfiles = require("../visiteProfiles/index");
 
 const grabLinks = async (page) => {
-  console.log("paged");
+  try {
+    const locations = await getLocations(page);
 
-  // links loop
-  for (let i = 0; i < countriesLinks.length; i++) {
-    await individualPageLinks(page, countriesLinks[i]);
+    for (let link of locations) {
+      const href = `${link}?profile-paginator-page=1`;
+      console.log(`[INFO] Visiting page: ${href}`);
+
+      const linkArr = await individualPageLinks(page, href);
+
+      for (let href of linkArr) {
+        await visiteProfiles(page, href);
+      }
+    }
+  } catch (error) {
+    console.log(`[INFO] -- ${error.message}`);
   }
-
-  await page.waitForTimeout(5000);
 };
 
 module.exports = grabLinks;
